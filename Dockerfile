@@ -72,8 +72,19 @@ RUN git clone https://github.com/timgrossmann/InstaPy.git \
     && pip install . \
     && sed -ie 's/#self.display/self.display/g' instapy/instapy.py
 
+# Install OpenSSH
+RUN apt-get update && apt-get install -y openssh-server
+RUN mkdir /var/run/sshd && \
+  # Allow root login with password
+  sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+  # Prevent user being kicked off after login
+  sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd && \
+# Expose SSH port
+EXPOSE 22
+
 # Copying the your quickstart file into the container and setting directory
 COPY quickstart.py ./InstaPy
 WORKDIR /InstaPy
 
 CMD ["python3.5", "quickstart.py"]
+CMD ["/usr/sbin/sshd", "-D"]
